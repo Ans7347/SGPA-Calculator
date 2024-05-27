@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGPA Calculator</title>
+    <style>
+        body {
+            font-family:'Times New Roman', Times, serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(to right, #00f899, #00f7ff);
+            color: #333;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #fff;
+        }
+        form, #result-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        input {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        input:focus {
+            border-color: #4CAF50;
+            box-shadow: 0 0 8px rgba(76, 175, 80, 0.2);
+        }
+        button {
+            display: block;
+            margin: 20px auto;
+            padding: 15px 30px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #result-container {
+            text-align: center;
+            color: #333;
+        }
+        #result-container h2 {
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>SGPA Calculator</h1>
+    <h2>Enter Subject Details</h2>
+    <form id="subject-form">
+        <!-- Subject input fields will be dynamically added here -->
+    </form>
+    <div id="subject-buttons-container">
+        <button type="button" id="subject-next-button">Next</button>
+        <button type="button" id="subject-submit-button" style="display:none;">Submit Subject Details</button>
+    </div>
+    <h2>CGPA and Semester Details</h2>
+    <form id="cgpa-form" style="display:none;">
+        <!-- CGPA input fields will be dynamically added here -->
+    </form>
+    <div id="cgpa-buttons-container" style="display:none;">
+        <button type="button" id="cgpa-next-button">Next</button>
+        <button type="button" id="cgpa-submit-button" style="display:none;">Submit CGPA Details</button>
+    </div>
+    <div id="result-container" style="display:none;">
+        <h2>Results</h2>
+        <p id="target-sgpa"></p>
+        <p id="current-sgpa"></p>
+    </div>
+
+    <script>
+        const totalSubjects = 6;
+        let currentSubject = 1;
+        const subjectMarks = {};
+        const subjectCredits = {};
+
+        function renderSubjectForm(subjectIndex) {
+            const subjectForm = document.getElementById('subject-form');
+            subjectForm.innerHTML = '';
+
+            const subjectLabel = document.createElement('label');
+            subjectLabel.textContent = `Subject ${subjectIndex}:`;
+            subjectForm.appendChild(subjectLabel);
+
+            const subjectInput = document.createElement('input');
+            subjectInput.type = 'text';
+            subjectInput.name = `subject-${subjectIndex}`;
+            subjectInput.required = true;
+            subjectForm.appendChild(subjectInput);
+
+            const isa1Label = document.createElement('label');
+            isa1Label.textContent = `ISA1 for Subject ${subjectIndex}:`;
+            subjectForm.appendChild(isa1Label);
+
+            const isa1Input = document.createElement('input');
+            isa1Input.type = 'number';
+            isa1Input.name = `isa1-${subjectIndex}`;
+            isa1Input.required = true;
+            subjectForm.appendChild(isa1Input);
+
+            const isa2Label = document.createElement('label');
+            isa2Label.textContent = `ISA2 for Subject ${subjectIndex}:`;
+            subjectForm.appendChild(isa2Label);
+
+            const isa2Input = document.createElement('input');
+            isa2Input.type = 'number';
+            isa2Input.name = `isa2-${subjectIndex}`;
+            isa2Input.required = true;
+            subjectForm.appendChild(isa2Input);
+
+            const esaLabel = document.createElement('label');
+            esaLabel.textContent = `ESA for Subject ${subjectIndex}:`;
+            subjectForm.appendChild(esaLabel);
+
+            const esaInput = document.createElement('input');
+            esaInput.type = 'number';
+            esaInput.name = `esa-${subjectIndex}`;
+            esaInput.required = true;
+            subjectForm.appendChild(esaInput);
+
+            const projectsLabel = document.createElement('label');
+            projectsLabel.textContent = `Projects/Assignments for Subject ${subjectIndex}:`;
+            subjectForm.appendChild(projectsLabel);
+
+            const projectsInput = document.createElement('input');
+            projectsInput.type = 'number';
+            projectsInput.name = `projects-${subjectIndex}`;
+            projectsInput.required = true;
+            subjectForm.appendChild(projectsInput);
+
+            const creditsLabel = document.createElement('label');
+            creditsLabel.textContent = `Credits for Subject ${subjectIndex}:`;
+            subjectForm.appendChild(creditsLabel);
+
+            const creditsInput = document.createElement('input');
+            creditsInput.type = 'number';
+            creditsInput.name = `credits-${subjectIndex}`;
+            creditsInput.min = 1;
+            creditsInput.required = true;
+            subjectForm.appendChild(creditsInput);
+        }
+
+        function saveCurrentSubjectDetails() {
+            const subjectName = document.querySelector(`input[name="subject-${currentSubject}"]`).value;
+            const isa1 = parseInt(document.querySelector(`input[name="isa1-${currentSubject}"]`).value);
+            const isa2 = parseInt(document.querySelector(`input[name="isa2-${currentSubject}"]`).value);
+            const esa = parseInt(document.querySelector(`input[name="esa-${currentSubject}"]`).value);
+            const projects = parseInt(document.querySelector(`input[name="projects-${currentSubject}"]`).value);
+            const credits = parseInt(document.querySelector(`input[name="credits-${currentSubject}"]`).value);
+
+            subjectMarks[subjectName] = { isa1, isa2, esa, projects };
+            subjectCredits[subjectName] = credits;
+        }
+
+        function renderCgpaForm(step) {
+            const cgpaForm = document.getElementById('cgpa-form');
+            cgpaForm.innerHTML = '';
+
+            let label, input;
+            if (step === 1) {
+                label = document.createElement('label');
+                label.textContent = 'Target CGPA (above 9):';
+                cgpaForm.appendChild(label);
+
+                input = document.createElement('input');
+                input.type = 'number';
+                input.id = 'target-cgpa';
+                input.name = 'target-cgpa';
+                input.step = '0.01';
+                input.required = true;
+                cgpaForm.appendChild(input);
+            } else if (step === 2) {
+                label = document.createElement('label');
+                label.textContent = 'Current CGPA:';
+                cgpaForm.appendChild(label);
+
+                input = document.createElement('input');
+                input.type = 'number';
+                input.id = 'current-cgpa';
+                input.name = 'current-cgpa';
+                input.step = '0.01';
+                input.required = true;
+                cgpaForm.appendChild(input);
+            } else if (step === 3) {
+                label = document.createElement('label');
+                label.textContent = 'Current Semester (1 to 8):';
+                cgpaForm.appendChild(label);
+
+                input = document.createElement('input');
+                input.type = 'number';
+                input.id = 'current-semester';
+                input.name = 'current-semester';
+                input.min = '1';
+                input.max = '8';
+                input.required = true;
+                cgpaForm.appendChild(input);
+            }
+        }
+
+        function calculateSgpa(subjectMarks, subjectCredits) {
+            let totalMarks = 0;
+            let totalCredits = 0;
+
+            for (const subject in subjectMarks) {
+                const { isa1, isa2, esa, projects } = subjectMarks[subject];
+                const isa_avg = (isa1 + isa2) / 2;
+                const esa_scaled = (esa / 100) * 50;
+                totalMarks += (isa_avg + esa_scaled + projects) * subjectCredits[subject];
+                totalCredits += subjectCredits[subject];
+            }
+
+            return totalMarks / totalCredits;
+        }
+
+        function calculateTargetSgpa(targetCgpa, currentCgpa, currentSemester) {
+            const totalCredits = 176;  // Assuming 8 semesters with 22 credits each
+            const creditsRemaining = totalCredits - (currentSemester - 1) * 22;
+            const targetTotalPoints = targetCgpa * totalCredits;
+            const currentTotalPoints = currentCgpa * (totalCredits - creditsRemaining);
+            const targetPointsRemaining = targetTotalPoints - currentTotalPoints;
+            return targetPointsRemaining / creditsRemaining;
+        }
+
+        function calculateResults() {
+            const targetCgpa = parseFloat(document.getElementById('target-cgpa').value);
+            const currentCgpa = parseFloat(document.getElementById('current-cgpa').value);
+            const currentSemester = parseInt(document.getElementById('current-semester').value);
+
+            const targetSgpa = calculateTargetSgpa(targetCgpa, currentCgpa, currentSemester);
+            const currentSgpa = calculateSgpa(subjectMarks, subjectCredits);
+
+            document.getElementById('target-sgpa').textContent = `To achieve a CGPA above ${targetCgpa} at the end of the 6th semester, you need a target SGPA of ${targetSgpa.toFixed(2)} in the remaining semesters.`;
+            document.getElementById('current-sgpa').textContent = `Your current SGPA for this semester is: ${currentSgpa.toFixed(2)}`;
+
+            document.getElementById('result-container').style.display = 'block';
+        }
+
+        document.getElementById('subject-next-button').addEventListener('click', () => {
+            if (currentSubject <= totalSubjects) {
+                saveCurrentSubjectDetails();
+                currentSubject++;
+                if (currentSubject <= totalSubjects) {
+                    renderSubjectForm(currentSubject);
+                } else {
+                    document.getElementById('subject-form').style.display = 'none';
+                    document.getElementById('subject-next-button').style.display = 'none';
+                    document.getElementById('subject-submit-button').style.display = 'block';
+                }
+            }
+        });
+
+        document.getElementById('subject-submit-button').addEventListener('click', () => {
+            document.getElementById('cgpa-form').style.display = 'block';
+            document.getElementById('subject-buttons-container').style.display = 'none';
+            renderCgpaForm(1);
+            currentCgpaStep = 1;
+        });
+
+        let currentCgpaStep = 1;
+
+        document.getElementById('cgpa-next-button').addEventListener('click', () => {
+            currentCgpaStep++;
+            if (currentCgpaStep <= 3) {
+                renderCgpaForm(currentCgpaStep);
+            } else {
+                document.getElementById('cgpa-form').style.display = 'none';
+                document.getElementById('cgpa-next-button').style.display = 'none';
+                document.getElementById('cgpa-submit-button').style.display = 'block';
+            }
+        });
+
+        document.getElementById('cgpa-submit-button').addEventListener('click', calculateResults);
+
+        renderSubjectForm(currentSubject);
+    </script>
+</body>
+</html>
